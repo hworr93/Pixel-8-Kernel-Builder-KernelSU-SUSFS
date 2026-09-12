@@ -6,10 +6,9 @@
 # https://gitlab.com/simonpunk/susfs4ksu/-/tree/gki-android14-6.1
 # https://gitlab.com/simonpunk/susfs4ksu/-/tree/gki-android16-6.12
 # To update these components, specify the latest commit hashes from the repositories above
-KSU_COMMIT="33d0c9205df47b6b1b61c25c13afa164b88871d1"
+KSU_COMMIT="58aecc40a6eebc677ec82cf8d6ca5bf5d18f2a4d"
 SUSFS_KSU_COMMIT_6_1="e5b4d2879836cfb8379010a8ebee76c519f5c834"
 SUSFS_KSI_COMMIT_6_12="edec89b54b919e86e028a80e8796da64598cb263"
-SUSFS_KSU_CONMIT_6_6="15e71acddb773b45b6c6821dfcc0e7eba85ec8f2"
 
 # ==============================================================================
 #                                AVB METADATA
@@ -20,17 +19,17 @@ SUSFS_KSU_CONMIT_6_6="15e71acddb773b45b6c6821dfcc0e7eba85ec8f2"
 #   python3 ./avbtool.py info_image --image [original_boot.img]
 #   Link to avbtool.py: https://android.googlesource.com/platform/external/avb/+/refs/heads/main-kernel/avbtool.py
 
-STABLE_rollback_index=1780272000
-STABLE_salt=2dcdc70b5d30387545bb940a97b68815a2312880ee79855ac80fa5617181965c
-STABLE_os_version=16
-STABLE_fingerprint='google/frankel/frankel:16/CP1A.260305.018/14887507:user/release-keys'
-STABLE_security_patch=2026-03-05
+STABLE_rollback_index=1785888000
+STABLE_salt=6caae4112961def27eeacd6573fb2417a926db7e6619a8aec1f8c3cf70a70ade
+STABLE_os_version=17
+STABLE_fingerprint=google/shiba/shiba:17/CP2A.260805.005/15828068:user/release-keys
+STABLE_security_patch=2026-08-05
 
-BETA_rollback_index=1780272000
-BETA_salt=2dcdc70b5d30387545bb940a97b68815a2312880ee79855ac80fa5617181965c
-BETA_os_version=16
-BETA_fingerprint='google/frankel/frankel:16/CP1A.260305.018/14887507:user/release-keys'
-BETA_security_patch=2026-03-05
+BETA_rollback_index=1785888000
+BETA_salt=4c94eb5419604ca26805bf8d0f2f0994f57b3dc506b72ed4f459b06319d36c37
+BETA_os_version=17
+BETA_fingerprint=google/shiba_beta/shiba:17/CP41.260814.003.B1/16166531:user/release-keys
+BETA_security_patch=2026-08-05
 
 # ==============================================================================
 #                                FIRMWARE BRANCHES
@@ -40,8 +39,8 @@ BETA_security_patch=2026-03-05
 # The version numbers are specified in the Makefile header (e.g., VERSION = 6, PATCHLEVEL = 1, SUBLEVEL = 157).
 # This version must match the kernel version of your installed firmware.
 
-STABLE_BRANCH="android15-6.6-2025-10"
-BETA_BRANCH="android15-6.6-2025-10"
+STABLE_BRANCH="android14-6.1-2025-12"
+BETA_BRANCH="android16-6.12-2026-06"
 
 # ==============================================================================
 #                        BUILD TOOLS & PIXEL DRIVERS
@@ -49,11 +48,10 @@ BETA_BRANCH="android15-6.6-2025-10"
 # Contains drivers, build tools, etc.
 # Cloned to kernel_pixel_6.1 / kernel_pixel_6.12 from:
 #   STABLE: https://gitlab.com/grapheneos/kernel_pixel
-STABLE: https://gitlab.com/grapheneos/kernel_pixel_6.6
 #   BETA:   https://gitlab.com/grapheneos/kernel_pixel_spacecraft
 # DO NOT CHANGE unless you know what you are doing
-PIXEL_TAG="2026050900"
-PIXEL_SPACECRAFT_BRANCH="16-qpr2p"
+PIXEL_TAG="2026062800"
+PIXEL_SPACECRAFT_BRANCH="17-base"
 
 # ==============================================================================
 #             EXPERIMENTAL INTEGRATIONS (REQUIRES MANUAL FIXES)
