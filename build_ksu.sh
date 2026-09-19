@@ -378,17 +378,29 @@ fi
 # ==============================================================================
 
 log "Correction of the .sh script used for build"
+# Resolve symlink for build_dist.sh to avoid sed --follow-symlinks errors
+BUILD_DIST="${KERNEL}/tools/build_dist.sh"
+if [[ -L "$BUILD_DIST" ]]; then
+  REAL_DIST=$(readlink -f "$BUILD_DIST" 2>/dev/null || true)
+  if [[ -n "$REAL_DIST" && -f "$REAL_DIST" ]]; then
+    BUILD_DIST="$REAL_DIST"
+  else
+    rm -f "$BUILD_DIST"
+    BUILD_DIST="${KERNEL}/tools/build_dist.sh"
+  fi
+fi
+
 if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   # Удаляем этап подписи .ko модулей, так как собирается только raw image
-  sed -i --follow-symlinks '/sign_file=$(mktemp)/,$d' ${KERNEL}/tools/build_dist.sh
+  sed -i '/sign_file=$(mktemp)/,$d' "$BUILD_DIST"
   # Меняем цель Bazel с пакета дистрибутива на ядро
-  sed -i --follow-symlinks 's/${DEVICE}\/dist/kernel/' ${KERNEL}/tools/build_dist.sh
-  sed -i --follow-symlinks 's/bazel" run/bazel" build/' ${KERNEL}/tools/build_dist.sh
+  sed -i 's/${DEVICE}\/dist/kernel/' "$BUILD_DIST"
+  sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
 elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   # В android16 цель ядра называется :${DEVICE}/kernel (заменяем /dist на /kernel в ${DEVICE_TARGET}/dist)
-  sed -i --follow-symlinks 's/\/dist/\/kernel/' ${KERNEL}/tools/build_dist.sh
+  sed -i 's/\/dist/\/kernel/' "$BUILD_DIST"
   # Меняем run на build. Целевой объект "kernel" требует только build.
-  sed -i --follow-symlinks 's/bazel" run/bazel" build/' ${KERNEL}/tools/build_dist.sh
+  sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
 fi
 
 log "Build kernel"
