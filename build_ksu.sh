@@ -390,17 +390,19 @@ if [[ -L "$BUILD_DIST" ]]; then
   fi
 fi
 
-if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
-  # Удаляем этап подписи .ko модулей, так как собирается только raw image
-  sed -i '/sign_file=$(mktemp)/,$d' "$BUILD_DIST"
-  # Меняем цель Bazel с пакета дистрибутива на ядро
-  sed -i 's/${DEVICE}\/dist/kernel/' "$BUILD_DIST"
-  sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
-  # В android16 цель ядра называется :${DEVICE}/kernel (заменяем /dist на /kernel в ${DEVICE_TARGET}/dist)
-  sed -i 's/\/dist/\/kernel/' "$BUILD_DIST"
-  # Меняем run на build. Целевой объект "kernel" требует только build.
-  sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
+if [[ -f "$BUILD_DIST" ]]; then
+  if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
+    # Удаляем этап подписи .ko модулей, так как собирается только raw image
+    sed -i '/sign_file=$(mktemp)/,$d' "$BUILD_DIST"
+    # Меняем цель Bazel с пакета дистрибутива на ядро
+    sed -i 's/${DEVICE}\/dist/kernel/' "$BUILD_DIST"
+    sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
+  elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
+    # В android16 цель ядра называется :${DEVICE}/kernel (заменяем /dist на /kernel в ${DEVICE_TARGET}/dist)
+    sed -i 's/\/dist/\/kernel/' "$BUILD_DIST"
+    # Меняем run на build. Целевой объект "kernel" требует только build.
+    sed -i 's/bazel" run/bazel" build/' "$BUILD_DIST"
+  fi
 fi
 
 log "Build kernel"
