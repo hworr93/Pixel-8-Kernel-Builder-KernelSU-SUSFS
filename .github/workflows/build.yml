@@ -103,7 +103,7 @@ jobs:
             </tr>
             <tr>
               <td><b>Device</b></td>
-              <td colspan="2" align="center">Pixel 8/Pro</td>
+              <td colspan="2" align="center">Pixel 10</td>
             </tr>
             <tr>
               <td><b>Build ID</b></td>
@@ -175,5 +175,5 @@ jobs:
 
           SHORT_SHA=$(git rev-parse --short HEAD)
           gh release create "$SHORT_SHA" artifacts/* \
-            --title "Pixel 8/Pro Kernel Build $SHORT_SHA" \
+            --title "Pixel 10 Kernel Build $SHORT_SHA" \
             --notes-file release_body.md

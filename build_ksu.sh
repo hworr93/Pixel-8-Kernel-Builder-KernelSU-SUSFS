@@ -103,6 +103,8 @@ if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   KERNEL="${PROJECT_ROOT}/kernel_pixel_6.1"
 elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
   KERNEL="${PROJECT_ROOT}/kernel_pixel_6.12"
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
+  KERNEL="${PROJECT_ROOT}/kernel_pixel_6.6"
 else
   log "Error: Unsupported kernel version: '${KERNEL_MAJOR_MINOR}' from branch '${GKI_BRANCH}'"
   exit 1
@@ -110,7 +112,7 @@ fi
 
 KSU_TYPE="$KSU_TYPE_FLAG"
 AOSP="$KERNEL/common/ack"
-DEVICE_DEFCONFIG="$KERNEL/private/devices/google/shusky/shusky_defconfig"
+DEVICE_DEFCONFIG="$KERNEL/private/devices/google/${DEVICE}/${DEVICE}_defconfig"
 GKI_DEFCONFIG="$AOSP/arch/arm64/configs/gki_defconfig"
 PATCH_DIR="${PROJECT_ROOT}/patches/susfs/$GKI_VERSION"
 
@@ -119,7 +121,7 @@ PATCH_DIR="${PROJECT_ROOT}/patches/susfs/$GKI_VERSION"
 # ==============================================================================
 
 log "Clean workspace"
-for mnt in "${PROJECT_ROOT}/kernel_pixel_6.1/common/ack" "${PROJECT_ROOT}/kernel_pixel_6.12/common/ack"; do
+for mnt in "${PROJECT_ROOT}/kernel_pixel_6.1/common/ack" "${PROJECT_ROOT}/kernel_pixel_6.12/common/ack" "${PROJECT_ROOT}/kernel_pixel_6.6/common/ack"; do
   if mountpoint -q "$mnt"; then
     sudo umount "$mnt" || {
       log "Ошибка: Не удалось размонтировать $mnt."
@@ -138,7 +140,7 @@ for kernel_folder in stable_source beta_source; do
   fi
 done
 
-for pixel_repo in kernel_pixel_6.1 kernel_pixel_6.12; do
+for pixel_repo in kernel_pixel_6.1 kernel_pixel_6.12 kernel_pixel_6.6; do
   if [[ -d "${PROJECT_ROOT}/$pixel_repo" ]]; then
     cd "${PROJECT_ROOT}/$pixel_repo"
     git reset --hard HEAD
@@ -180,15 +182,15 @@ if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
       log "kernel_pixel_6.1 is already at tag $PIXEL_TAG. No update needed."
     fi
   fi
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   if [[ ! -d "$KERNEL/.git" ]]; then
-    log "Cloning kernel_pixel_6.12 from branch $PIXEL_SPACECRAFT_BRANCH"
-    git clone --depth=1 -b "$PIXEL_SPACECRAFT_BRANCH" https://gitlab.com/grapheneos/kernel_pixel_6.12 "$KERNEL"
+    log "Cloning kernel_pixel_${KERNEL_MAJOR_MINOR} from branch $PIXEL_SPACECRAFT_BRANCH"
+    git clone --depth=1 -b "$PIXEL_SPACECRAFT_BRANCH" "https://gitlab.com/grapheneos/kernel_pixel_${KERNEL_MAJOR_MINOR}" "$KERNEL"
   else
-    log "Fetching latest commits for kernel_pixel_6.12 ($PIXEL_SPACECRAFT_BRANCH)..."
+    log "Fetching latest commits for kernel_pixel_${KERNEL_MAJOR_MINOR} ($PIXEL_SPACECRAFT_BRANCH)..."
     git -C "$KERNEL" fetch --depth=1 origin "$PIXEL_SPACECRAFT_BRANCH"
     git -C "$KERNEL" reset --hard FETCH_HEAD
-    log "Updated kernel_pixel_6.12 to latest commit."
+    log "Updated kernel_pixel_${KERNEL_MAJOR_MINOR} to latest commit."
   fi
 fi
 
@@ -199,8 +201,10 @@ if [[ "$USE_SUSFS" == "1" ]]; then
   cd "${PROJECT_ROOT}/susfs4ksu"
   if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
     git checkout "${SUSFS_KSU_COMMIT_6_1}"
-  elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+  elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
     git checkout "${SUSFS_KSU_COMMIT_6_12}"
+  elif [[ "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
+    git checkout "${SUSFS_KSU_COMMIT_6_6}"
   fi
 fi
 
@@ -237,7 +241,7 @@ fi
 if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   # В 6.1 вырезаем вызов check_defconfig из скриптов сборки
   sed -i -E 's/check_defconfig( && )?//g' "$AOSP"/build.config.gki*
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   # В 6.12 проверка задаётся атрибутом правила в BUILD.bazel
   sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' "$AOSP/BUILD.bazel"
 fi
@@ -246,7 +250,7 @@ fi
 if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   rm -rf "$AOSP"/android/abi_gki_protected_exports_*
   perl -pi -e 's/^\s*"protected_exports_list"\s*:\s*"android\/abi_gki_protected_exports_aarch64",\s*$//;' "$AOSP/BUILD.bazel"
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   perl -pi -e 's/^\s*protected_module_names_list\s*=\s*":gki_(?:aarch64|x86_64)_protected_module_names",\s*$//;' "$AOSP/BUILD.bazel"
 
   # Runtime ABI bypass для 6.12 (обход жесткой проверки CRC модулей)
@@ -265,7 +269,7 @@ sed -i 's/echo -n -dirty/echo -n ""/g' "$KERNEL/build/kernel/kleaf/workspace_sta
 sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" "$KERNEL/build/kernel/kleaf/impl/stamp.bzl" 2>/dev/null || true
 sed -i 's/-dirty//' "$AOSP/scripts/setlocalversion" 2>/dev/null || true
 
-if [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+if [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   #sed -i 's/ifdef CONFIG_ANDROID_BINDER_IPC_RUST/ifneq (,1)/' "$AOSP/drivers/android/binder/Makefile"
   #sed -i '/rust_binder\.ko/d' "$AOSP/modules.bzl"
   # Создаём символическую ссылку на бинарник rust. В prebuilts репозитория 6.12 от Google он имеет другую версию.
@@ -380,7 +384,7 @@ if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   # Меняем цель Bazel с пакета дистрибутива на ядро
   sed -i --follow-symlinks 's/${DEVICE}\/dist/kernel/' ${KERNEL}/tools/build_dist.sh
   sed -i --follow-symlinks 's/bazel" run/bazel" build/' ${KERNEL}/tools/build_dist.sh
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   # В android16 цель ядра называется :${DEVICE}/kernel (заменяем /dist на /kernel в ${DEVICE_TARGET}/dist)
   sed -i --follow-symlinks 's/\/dist/\/kernel/' ${KERNEL}/tools/build_dist.sh
   # Меняем run на build. Целевой объект "kernel" требует только build.
@@ -395,10 +399,10 @@ fi
 
 if [[ "$KERNEL_MAJOR_MINOR" == "6.1" ]]; then
   export BUILD_NUMBER=$(shuf -i 10000000-99999999 -n 1)
-  KLEAF_REPO_MANIFEST=aosp_manifest.xml ./build_shusky.sh --config=fast --lto=none --keep_going
-elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" ]]; then
+  KLEAF_REPO_MANIFEST=aosp_manifest.xml ./build_${DEVICE}.sh --config=fast --lto=none --keep_going
+elif [[ "$KERNEL_MAJOR_MINOR" == "6.12" || "$KERNEL_MAJOR_MINOR" == "6.6" ]]; then
   export BUILD_NUMBER=$(shuf -i 10000000-99999999 -n 1)
-  ./build_shusky.sh --config=fast --config=stamp --extra_git_project=common/ack --lto=none --keep_going
+  ./build_${DEVICE}.sh --config=fast --config=stamp --extra_git_project=common/ack --lto=none --keep_going
 fi
 
 # ==============================================================================
